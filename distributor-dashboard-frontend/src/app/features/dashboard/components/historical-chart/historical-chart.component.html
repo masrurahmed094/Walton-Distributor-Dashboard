@@ -1,26 +1,35 @@
 <div class="chart-container">
   <h2>Historical Performance</h2>
 
+  <!-- 
+    This block now uses the cleaner *ngIf/else syntax.
+    The chart will only render if there is data to display.
+  -->
   <div *ngIf="processedChartData && processedChartData.length > 0; else emptyState" class="chart-wrapper">
-    <ngx-charts-line-chart
-      [view]="[700, 400]"
-      [scheme]="colorScheme"
+    <!-- This remains the vertical bar chart component with all its correct bindings -->
+    <ngx-charts-bar-vertical
       [results]="processedChartData"
-      [legend]="legend"
-      [legendPosition]="legendPosition"
+      [scheme]="colorScheme"
       [xAxis]="xAxis"
       [yAxis]="yAxis"
       [showXAxisLabel]="showXAxisLabel"
       [showYAxisLabel]="showYAxisLabel"
       [xAxisLabel]="xAxisLabel"
       [yAxisLabel]="yAxisLabel"
-      [animations]="animations">
-    </ngx-charts-line-chart>
+      [animations]="animations"
+      [gradient]="gradient"
+      [showGridLines]="showGridLines">
+    </ngx-charts-bar-vertical>
   </div>
 
+  <!-- 
+    This template is shown when the processedChartData is empty,
+    providing a clear "empty state" message to the user.
+  -->
   <ng-template #emptyState>
     <div class="empty-state">
-      <p>No historical performance data available.</p>
+      <p>No historical performance data available for this selection.</p>
     </div>
   </ng-template>
 </div>
+
