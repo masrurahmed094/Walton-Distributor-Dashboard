@@ -1,0 +1,16 @@
+<div class="admin-container">
+  <h1 class="page-title">User Management</h1>
+
+  <div *ngIf="users$ | async as users; else loadingOrError">
+    <app-user-list [users]="users"></app-user-list>
+  </div>
+
+  <ng-template #loadingOrError>
+    <div *ngIf="(users$ | async) === null; else loading">
+      <p class="error-message">Failed to load user data. Please try again later.</p>
+    </div>
+    <ng-template #loading>
+      <p>Loading users...</p>
+    </ng-template>
+  </ng-template>
+</div>

@@ -1,0 +1,41 @@
+<div class="profile-container" *ngIf="userProfile; else loading">
+  <div class="profile-header">
+    <h2>User Profile</h2>
+  </div>
+
+  <div class="profile-details">
+    <div class="detail-item">
+      <span class="label">Name:</span>
+      <span class="value">{{ userProfile.name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Username:</span>
+      <span class="value">{{ userProfile.username }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Email:</span>
+      <span class="value">{{ userProfile.email }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Department:</span>
+      <span class="value">{{ userProfile.department }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Phone:</span>
+      <span class="value">{{ userProfile.phone }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Roles:</span>
+      <span class="value roles">{{ userProfile.roles.join(', ') }}</span>
+    </div>
+  </div>
+
+  <div class="profile-actions">
+    <button class="btn btn-primary" (click)="onEdit()">Edit Profile</button>
+    <button class="btn btn-danger" (click)="onDelete()">Delete Account</button>
+  </div>
+</div>
+
+<ng-template #loading>
+  <p>Loading profile...</p>
+</ng-template>

@@ -1,0 +1,35 @@
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Department</th>
+        <th>Roles</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users">
+        <td>{{ user.name }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.department }}</td>
+        <td>{{ user.roles.join(', ') }}</td>
+        <td>
+          <span class="status" [class.status-active]="user.active" [class.status-pending]="!user.active">
+            {{ user.active ? 'Active' : 'Pending' }}
+          </span>
+        </td>
+        <td>
+          <label class="switch">
+            <input type="checkbox" [checked]="user.active" (change)="onAccessChange(user, $event)">
+            <span class="slider round"></span>
+          </label>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

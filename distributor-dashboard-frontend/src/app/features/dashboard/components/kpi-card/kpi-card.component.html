@@ -1,0 +1,35 @@
+<div class="kpi-card-container">
+  <div class="card-header">
+    <h3 class="card-title">{{ title }}</h3>
+  </div>
+  <div class="card-content">
+    <!-- Show spinner while loading -->
+    <div *ngIf="isLoading" class="spinner-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <!-- Show content when NOT loading -->
+    <ng-container *ngIf="!isLoading">
+      <!-- Show this block if data exists -->
+      <div *ngIf="data; else noDataTemplate" class="value-container">
+        <p class="kpi-value">
+          {{ format === 'currency' ? (data.amount | currency:'BDT ') : (data.amount | number) }}
+        </p>
+        
+        <!-- Progress Bar Logic -->
+        <div *ngIf="progressTotal" class="progress-bar-container">
+          <mat-progress-bar 
+            [value]="progressPercentage" 
+            [color]="progressColor">
+          </mat-progress-bar>
+          <small class="progress-label">{{ progressPercentage | number:'1.0-0' }}% of target</small>
+        </div>
+      </div>
+
+      <!-- This is the explicit "No Data" template -->
+      <ng-template #noDataTemplate>
+        <div class="no-data-value">-</div>
+      </ng-template>
+    </ng-container>
+  </div>
+</div>

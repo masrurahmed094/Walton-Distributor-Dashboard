@@ -1,0 +1,26 @@
+<div class="chart-container">
+  <h2>Historical Performance</h2>
+
+  <div *ngIf="processedChartData && processedChartData.length > 0; else emptyState" class="chart-wrapper">
+    <ngx-charts-line-chart
+      [view]="[700, 400]"
+      [scheme]="colorScheme"
+      [results]="processedChartData"
+      [legend]="legend"
+      [legendPosition]="legendPosition"
+      [xAxis]="xAxis"
+      [yAxis]="yAxis"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [animations]="animations">
+    </ngx-charts-line-chart>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <p>No historical performance data available.</p>
+    </div>
+  </ng-template>
+</div>

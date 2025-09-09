@@ -1,0 +1,16 @@
+<header class="main-header">
+  <div class="header-left">
+    <img src="assets/images/walton-logo.png" alt="Walton Logo" class="logo">
+    <h1 class="title">Distributor Dashboard</h1>
+  </div>
+
+  <nav class="header-right" *ngIf="currentUser$ | async as user">
+    <a *ngIf="isAdmin$ | async" routerLink="/admin" class="nav-link admin-link">Admin</a>
+
+    <a routerLink="/profile" class="nav-link profile-button">
+      <span>{{ user.name }}</span>
+    </a>
+
+    <button class="btn btn-logout" (click)="logout()">Logout</button>
+  </nav>
+</header>

@@ -1,0 +1,28 @@
+<div class="page-container">
+  <h1>My Profile</h1>
+
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+  <div *ngIf="userProfile$ | async as user; else loadingOrError">
+    <div *ngIf="!isEditing; else editForm">
+      <app-profile-details
+        [userProfile]="user"
+        (edit)="isEditing = true"
+        (delete)="onDeleteProfile()">
+      </app-profile-details>
+    </div>
+
+    <ng-template #editForm>
+      <app-profile-edit-form
+        [userProfile]="user"
+        (save)="onSaveProfile($event)"
+        (cancel)="isEditing = false">
+      </app-profile-edit-form>
+    </ng-template>
+  </div>
+
+  <ng-template #loadingOrError>
+    <p>Loading...</p>
+  </ng-template>
+</div>

@@ -1,0 +1,31 @@
+# This file tells Git which files and folders to ignore in the project.
+
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+
+# IDE and editor directories
+/.vscode
+/.idea
+*.iml
+*.ipr
+*.iws
+
+# Angular cache
+/.angular/cache
+
+# Log files
+npm-debug.log*
+yarn-error.log
+yarn-debug.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Environment files that might contain secrets (optional, good practice)
+# src/environments/environment.*.ts
+# !src/environments/environment.ts
+# !src/environments/environment.prod.ts

@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+}
+
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main-content {
+  flex-grow: 1; // Allows this area to take up all available space
+  overflow-y: auto; // Adds a scrollbar if content overflows
+  background-color: #f8f9fa; // A light gray background for the content area
+  padding: 1.5rem;
+}

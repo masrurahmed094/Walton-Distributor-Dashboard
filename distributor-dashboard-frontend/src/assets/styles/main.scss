@@ -1,0 +1,48 @@
+/*
+  This is the main global stylesheet for the application.
+*/
+
+@import "@ng-select/ng-select/themes/default.theme.css";
+// --- 1. CSS Variables (Theme) ---
+// Defines the color palette and fonts for a consistent look and feel.
+:root {
+  --primary-color: #007bff;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --light-gray-bg: #f8f9fa; // The main background for content areas
+  --text-color-dark: #343a40;
+  --text-color-light: #6c757d;
+  --border-color: #e9ecef;
+  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+
+// --- 2. Global Resets & Base Styles ---
+// Basic resets to ensure consistent styling across different browsers.
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-sans-serif);
+  color: var(--text-color-dark);
+  background-color: var(--light-gray-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

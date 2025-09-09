@@ -1,0 +1,77 @@
+<div class="dashboard-container">
+  <div class="filters-container">
+    <div class="filter-group">
+      <label for="distributor-select">Distributor</label>
+      <ng-select
+        id="distributor-select"
+        [items]="(distributors$ | async) ?? []"
+        bindLabel="name"
+        placeholder="Search by Distributor Name or Code"
+        [searchable]="true"
+        [searchFn]="customSearchFn"
+        (change)="onDistributorChange($event)">
+      </ng-select>
+    </div>
+    <div class="filter-group">
+      <label for="start-date">Date Range</label>
+      <div class="date-range">
+        <input #startDate type="date" id="start-date">
+        <span>to</span>
+        <input #endDate type="date" id="end-date" (change)="onDateRangeChange(startDate.value, endDate.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- FIX: Both the KPI grid and the main grid are now inside this container. -->
+  <!-- This ensures they appear at the same time, not based on a click. -->
+  <ng-container *ngIf="hasInitialFilters$ | async">
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <app-kpi-card title="Lifting Target" [data]="liftingTarget$ | async" [isLoading]="isLoading.liftingTarget"></app-kpi-card>
+        <app-kpi-card title="Purchase Amount" [data]="purchaseAmount$ | async" [isLoading]="isLoading.purchaseAmount"></app-kpi-card>
+        <app-kpi-card
+          title="Monthly IMS"
+          [data]="imsInvoiced$ | async"
+          [isLoading]="isLoading.imsInvoiced || isLoading.imsTarget"
+          [progressValue]="(imsInvoiced$ | async)?.amount ?? null"
+          [progressTotal]="(imsTarget$ | async)?.amount ?? null">
+        </app-kpi-card>
+        <app-kpi-card title="Monthly Collection" [data]="monthlyCollection$ | async" [isLoading]="isLoading.monthlyCollection"></app-kpi-card>
+        <app-kpi-card title="Primary Order" [data]="primaryOrder$ | async" [isLoading]="isLoading.primaryOrder"></app-kpi-card>
+        <app-kpi-card title="Secondary Order" [data]="secondaryOrder$ | async" [isLoading]="isLoading.secondaryOrder"></app-kpi-card>
+        <app-kpi-card title="Current Stock" [data]="currentStock$ | async" [isLoading]="isLoading.currentStock"></app-kpi-card>
+        <app-kpi-card title="Total Active Customers" [data]="totalActiveCustomers$ | async" [isLoading]="isLoading.totalActiveCustomers" format="number"></app-kpi-card>
+        <app-kpi-card title="Total Invoiced Customers" [data]="totalInvoicedCustomers$ | async" [isLoading]="isLoading.totalInvoicedCustomers" format="number"></app-kpi-card>
+    </div>
+
+    <!-- Main Grid for Charts and Tables -->
+    <div class="main-grid">
+      <div class="chart-area">
+          <div *ngIf="isLoading.historicalData; else chartContent" class="skeleton-loader chart-skeleton"></div>
+          <ng-template #chartContent>
+              <app-historical-chart [chartData]="(historicalData$ | async) ?? []"></app-historical-chart>
+          </ng-template>
+      </div>
+      <div class="table-area">
+          <div *ngIf="isLoading.srPerformance; else srTableContent" class="skeleton-loader table-skeleton"></div>
+          <ng-template #srTableContent>
+              <app-sr-performance-table [performanceData]="(srPerformance$ | async) ?? []"></app-sr-performance-table>
+          </ng-template>
+      </div>
+      <div class="full-width-area">
+          <div *ngIf="isLoading.distributorReport; else reportContent" class="skeleton-loader table-skeleton"></div>
+          <ng-template #reportContent>
+              <app-distributor-report [reportData]="(distributorReport$ | async) ?? []"></app-distributor-report>
+          </ng-template>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Welcome Message -->
+  <div *ngIf="!(hasInitialFilters$ | async)" class="initial-message">
+    <h2>Welcome to the Distributor Dashboard</h2>
+    <p>Please select a distributor and a date range to view their respective data.</p>
+  </div>
+
+</div>
+

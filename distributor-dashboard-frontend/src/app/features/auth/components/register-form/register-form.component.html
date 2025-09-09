@@ -1,0 +1,64 @@
+<div class="form-container">
+  <form *ngIf="!successMessage" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <h2>Create an Account</h2>
+    <p>Please fill out the form below to register.</p>
+
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <input id="name" type="text" formControlName="name" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input id="email" type="email" formControlName="email" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input id="username" type="text" formControlName="username" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" formControlName="password" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="department">Department</label>
+      <input id="department" type="text" formControlName="department" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="phone">Phone</label>
+      <input id="phone" type="text" formControlName="phone" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="securityQuestion">Security Question</label>
+      <input id="securityQuestion" type="text" formControlName="securityQuestion" class="form-control" placeholder="e.g., Where is your home town?">
+    </div>
+
+    <div class="form-group">
+      <label for="securityAnswer">Security Answer</label>
+      <input id="securityAnswer" type="text" formControlName="securityAnswer" class="form-control">
+    </div>
+
+    <button type="submit" class="btn-submit" [disabled]="isLoading || registerForm.invalid">
+      {{ isLoading ? 'Registering...' : 'Register' }}
+    </button>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div class="form-links">
+      <a routerLink="/auth/login">Already have an account? Login</a>
+    </div>
+  </form>
+
+  <div *ngIf="successMessage" class="success-view">
+    <h2>Registration Successful!</h2>
+    <p>{{ successMessage }}</p>
+    <a routerLink="/auth/login" class="link-login">Return to Login</a>
+  </div>
+</div>
