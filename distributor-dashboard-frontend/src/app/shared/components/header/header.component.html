@@ -1,7 +1,13 @@
 <header class="main-header">
   <div class="header-left">
     <img src="assets/images/walton-logo.png" alt="Walton Logo" class="logo">
-    <h1 class="title">Distributor Dashboard</h1>
+    <!-- 
+      MODIFIED: The title is now wrapped in an anchor tag to make it a clickable link.
+      It uses routerLink to navigate to the main dashboard page.
+    -->
+    <a routerLink="/dashboard" class="title-link">
+      <h1 class="title">Distributor Dashboard</h1>
+    </a>
   </div>
 
   <nav class="header-right" *ngIf="currentUser$ | async as user">
@@ -14,3 +20,4 @@
     <button class="btn btn-logout" (click)="logout()">Logout</button>
   </nav>
 </header>
+

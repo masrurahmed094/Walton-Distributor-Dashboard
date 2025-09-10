@@ -1,44 +1,32 @@
+// --- Main container for the entire dashboard page ---
 .dashboard-container {
-  padding: 1.5rem;
+  // FIX: Padding is removed from the top (set to 0) to eliminate the gap.
+  // Padding on the sides (2rem) and bottom (2rem) is kept for proper spacing.
+  padding: 0 2rem 2rem;
 }
 
+// --- Container for the filter dropdowns and date range ---
 .filters-container {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: wrap; // Allows filters to stack on smaller screens
   gap: 1.5rem;
   padding: 1.5rem;
-  background-color: #fff;
+  background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-bottom: 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  min-width: 250px;
-  flex-grow: 1;
+  flex-grow: 1; // Allows filter groups to share space evenly
 
   label {
-    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: #495057;
-  }
-
-  select, input {
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-
-  ng-select {
-    flex-grow: 1;
   }
 }
 
@@ -46,50 +34,65 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  input[type="date"] {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    min-width: 150px;
+  }
 }
 
+// --- Grid layout for the KPI cards ---
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
+// --- Grid layout for the main charts and tables ---
 .main-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  grid-template-areas:
-    "chart table"
-    "full full";
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: auto;
   gap: 1.5rem;
-
-  .chart-area { grid-area: chart; }
-  .table-area { grid-area: table; }
-  .full-width-area { grid-area: full; }
-}
-
-.initial-message {
-  text-align: center;
-  padding: 4rem;
-  margin-top: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  color: #6c757d;
-}
-
-// Responsive adjustments
-@media (max-width: 992px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "chart"
-      "table"
-      "full";
+  
+  .full-width-area {
+    grid-column: 1 / -1; // Makes the distributor report span the full width
   }
 }
 
-// Fix for the ng-select input size
-:host ::ng-deep .ng-select .ng-input > input {
-  width: 100% !important;
-  min-width: 150px;
+// --- Welcome message styling ---
+.initial-message {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  
+  h2 {
+    margin-top: 0;
+  }
+}
+
+// --- Skeleton loader styling ---
+.skeleton-loader {
+  background-color: #e0e0e0;
+  border-radius: 8px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.chart-skeleton {
+  height: 400px; 
+}
+
+.table-skeleton {
+  height: 300px;
+}
+
+@keyframes pulse {
+  0% { background-color: #e0e0e0; }
+  50% { background-color: #f0f0f0; }
+  100% { background-color: #e0e0e0; }
 }

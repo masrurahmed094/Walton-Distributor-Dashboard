@@ -37,14 +37,20 @@ tbody tr:nth-of-type(even) {
   background-color: #f8f9fa;
 }
 
+/* --- Start of Corrected Code --- */
+
+/* This class is for positive numbers (durationDue > 0) */
 .due-positive {
-  color: #d9534f;
+  color: #28a745; /* CHANGED: This is now green */
   font-weight: 600;
 }
 
+/* This class is for negative numbers (durationDue < 0) */
 .due-credit {
-  color: #28a745;
+  color: #d9534f; /* CHANGED: This is now red */
 }
+
+/* --- End of Corrected Code --- */
 
 .empty-state {
   text-align: center;

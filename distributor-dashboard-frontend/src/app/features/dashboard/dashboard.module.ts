@@ -16,6 +16,7 @@ import { KpiCardComponent } from './components/kpi-card/kpi-card.component';
 import { HistoricalChartComponent } from './components/historical-chart/historical-chart.component';
 import { SrPerformanceTableComponent } from './components/sr-performance-table/sr-performance-table.component';
 import { DistributorReportComponent } from './components/distributor-report/distributor-report.component';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 // Define the routes for this feature module
 const routes: Routes = [
@@ -42,7 +43,8 @@ const routes: Routes = [
     NgxChartsModule,
     MatProgressSpinnerModule,
     MatProgressBarModule,
-    MatTableModule
+    MatTableModule,
+    SharedModule
   ]
 })
 export class DashboardModule { }

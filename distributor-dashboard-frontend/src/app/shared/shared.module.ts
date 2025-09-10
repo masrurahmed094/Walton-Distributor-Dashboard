@@ -5,11 +5,16 @@ import { RouterModule } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
 import { LayoutComponent } from './components/layout/layout.component';
 
+// --- IMPORT THE NEW PIPE ---
+import { SafeHtmlPipe } from './pipes/safe-html.pipe';
+
 @NgModule({
   declarations: [
     // All components that are part of this shared module.
     HeaderComponent,
-    LayoutComponent
+    LayoutComponent,
+    // --- ADD THE PIPE TO DECLARATIONS ---
+    SafeHtmlPipe
   ],
   imports: [
     // CommonModule is required for basic Angular directives.
@@ -21,7 +26,10 @@ import { LayoutComponent } from './components/layout/layout.component';
     // We export these components so that other modules that import the SharedModule
     // can use them in their own templates.
     HeaderComponent,
-    LayoutComponent
+    LayoutComponent,
+    // --- ALSO ADD THE PIPE TO EXPORTS ---
+    SafeHtmlPipe
   ]
 })
 export class SharedModule { }
+

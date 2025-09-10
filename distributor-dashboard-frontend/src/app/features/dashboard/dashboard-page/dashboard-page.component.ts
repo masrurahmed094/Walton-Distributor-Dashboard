@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
-import { switchMap, takeUntil, catchError, finalize, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, combineLatest, of, forkJoin } from 'rxjs';
+import { switchMap, takeUntil, catchError, map, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { DashboardService } from '../services/dashboard.service';
 import {
     Distributor,
@@ -9,6 +9,8 @@ import {
     SrPerformance,
     DistributorReport
 } from '../../../core/models/dashboard.model';
+import { kpiIcons } from './kpi-icons';
+import { isEqual } from 'lodash-es';
 
 @Component({
     selector: 'app-dashboard-page',
@@ -16,256 +18,159 @@ import {
     styleUrls: ['./dashboard-page.component.scss']
 })
 export class DashboardPageComponent implements OnInit, OnDestroy {
+    // --- FILTERS ---
     public selectedDistributorCode$ = new BehaviorSubject<string | null>(null);
     public selectedDateRange$ = new BehaviorSubject<{ start: string; end: string } | null>(null);
     public hasInitialFilters$!: Observable<boolean>;
     private destroy$ = new Subject<void>();
 
-    // Explicit loading flags for each data stream
+    // --- ICONS ---
+    public icons = kpiIcons;
+
+    // --- LOADING FLAGS ---
     public isLoading = {
-        liftingTarget: false,
-        purchaseAmount: false,
-        imsTarget: false,
-        imsInvoiced: false,
-        monthlyCollection: false,
-        primaryOrder: false,
-        secondaryOrder: false,
-        currentStock: false,
-        totalActiveCustomers: false,
-        totalInvoicedCustomers: false,
+        kpis: false,
         historicalData: false,
         srPerformance: false,
         distributorReport: false
     };
 
-    // Observables for dashboard data
-    distributors$!: Observable<Distributor[]>;
-    historicalData$!: Observable<HistoricalPerformance[] | null>;
-    liftingTarget$!: Observable<KpiResponse | null>;
-    purchaseAmount$!: Observable<KpiResponse | null>;
-    imsTarget$!: Observable<KpiResponse | null>;
-    imsInvoiced$!: Observable<KpiResponse | null>;
-    monthlyCollection$!: Observable<KpiResponse | null>;
-    primaryOrder$!: Observable<KpiResponse | null>;
-    secondaryOrder$!: Observable<KpiResponse | null>;
-    currentStock$!: Observable<KpiResponse | null>;
-    totalActiveCustomers$!: Observable<KpiResponse | null>;
-    totalInvoicedCustomers$!: Observable<KpiResponse | null>;
-    srPerformance$!: Observable<SrPerformance[] | null>;
-    distributorReport$!: Observable<DistributorReport[] | null>;
+    // --- DATA STREAMS (using BehaviorSubject for imperative updates) ---
+    public distributors$!: Observable<Distributor[]>;
+    public historicalData$ = new BehaviorSubject<HistoricalPerformance[] | null>(null);
+    public kpiData$ = new BehaviorSubject<any>(null); 
+    public srPerformance$ = new BehaviorSubject<SrPerformance[] | null>(null);
+    public distributorReport$ = new BehaviorSubject<DistributorReport[] | null>(null);
+
 
     constructor(
         private dashboardService: DashboardService,
         private cdr: ChangeDetectorRef,
-        private zone: NgZone // Inject NgZone for guaranteed UI updates
+        private zone: NgZone
     ) {}
 
     ngOnInit(): void {
-        const filters$ = combineLatest([
-            this.selectedDistributorCode$,
-            this.selectedDateRange$
-        ]);
+        this.hasInitialFilters$ = this.selectedDistributorCode$.pipe(map(code => !!code));
 
-        this.hasInitialFilters$ = filters$.pipe(
-            map(([code, range]) => !!code && !!range)
-        );
-
+        // Fetch distributors list once on init
         this.distributors$ = this.dashboardService.getDistributors().pipe(
-            catchError(err => {
-                console.error('Error fetching distributors:', err);
-                return of([]);
-            })
+            catchError(() => of([]))
         );
         
-        // --- Initialize Data Streams with definitive loading logic ---
-        this.initializeDataStreams(filters$);
+        this.initializeDataStreams();
     }
     
-    private initializeDataStreams(filters$: Observable<[string | null, { start: string; end: string; } | null]>): void {
-        this.liftingTarget$ = filters$.pipe(
-            switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('liftingTarget', true);
-                return this.dashboardService.getLiftingTarget({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => {
-                        console.error('Error fetching Lifting Target:', err);
-                        return of(null);
-                    }),
-                    finalize(() => this.setLoading('liftingTarget', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.purchaseAmount$ = filters$.pipe(
-            switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('purchaseAmount', true);
-                return this.dashboardService.getPurchaseAmount({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => {
-                        console.error('Error fetching Purchase Amount:', err);
-                        return of(null);
-                    }),
-                    finalize(() => this.setLoading('purchaseAmount', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.imsTarget$ = filters$.pipe(
-             switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('imsTarget', true);
-                return this.dashboardService.getImsTarget({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => {
-                        console.error('Error fetching IMS Target:', err);
-                        return of(null);
-                    }),
-                    finalize(() => this.setLoading('imsTarget', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-        
-        this.imsInvoiced$ = this.selectedDistributorCode$.pipe(
+    private initializeDataStreams(): void {
+        // --- STREAM 1: Handles data dependent ONLY on the distributor code ---
+        this.selectedDistributorCode$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            tap(code => {
+                this.distributorReport$.next(null);
+                this.kpiData$.next(null);
+                this.historicalData$.next(null);
+                this.srPerformance$.next(null);
+                if (code) {
+                  this.setLoading('historicalData', true);
+                  this.setLoading('srPerformance', true);
+                  this.setLoading('kpis', true);
+                }
+            }),
             switchMap(code => {
                 if (!code) return of(null);
-                this.setLoading('imsInvoiced', true);
-                return this.dashboardService.getImsInvoiced(code).pipe(
-                    catchError(err => {
-                        console.error('Error fetching IMS Invoiced:', err);
-                        return of(null);
-                    }),
-                    finalize(() => this.setLoading('imsInvoiced', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-        
-        // --- Repeat for all other data streams ---
-        this.monthlyCollection$ = filters$.pipe(
+                
+                return forkJoin({
+                    historical: this.dashboardService.getHistoricalPerformance(code).pipe(catchError(() => of(null))),
+                    sr: this.dashboardService.getSrPerformance(code).pipe(catchError(() => of(null))),
+                    imsInvoiced: this.dashboardService.getImsInvoiced(code).pipe(catchError(() => of(null))),
+                    currentStock: this.dashboardService.getCurrentStock(code).pipe(catchError(() => of(null))),
+                    totalActiveCustomers: this.dashboardService.getTotalActiveCustomers(code).pipe(catchError(() => of(null))),
+                    totalInvoicedCustomers: this.dashboardService.getTotalInvoicedCustomers(code).pipe(catchError(() => of(null)))
+                });
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (result) {
+                this.historicalData$.next(result.historical);
+                this.srPerformance$.next(result.sr);
+                this.kpiData$.next({
+                    imsInvoiced: result.imsInvoiced,
+                    currentStock: result.currentStock,
+                    totalActiveCustomers: result.totalActiveCustomers,
+                    totalInvoicedCustomers: result.totalInvoicedCustomers
+                });
+            }
+            this.setLoading('historicalData', false);
+            this.setLoading('srPerformance', false);
+        });
+
+        // --- STREAM 2: Handles data dependent on BOTH distributor code and date range ---
+        combineLatest([this.selectedDistributorCode$, this.selectedDateRange$]).pipe(
+            debounceTime(300),
+            distinctUntilChanged(isEqual),
             switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('monthlyCollection', true);
-                return this.dashboardService.getMonthlyCollection({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => { console.error('Error fetching Monthly Collection:', err); return of(null); }),
-                    finalize(() => this.setLoading('monthlyCollection', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
+                if (!code || !range) {
+                    this.setLoading('kpis', false);
+                    return of(null);
+                }
 
-        this.primaryOrder$ = filters$.pipe(
-            switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('primaryOrder', true);
-                return this.dashboardService.getPrimaryOrder({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => { console.error('Error fetching Primary Order:', err); return of(null); }),
-                    finalize(() => this.setLoading('primaryOrder', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.secondaryOrder$ = filters$.pipe(
-            switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
-                this.setLoading('secondaryOrder', true);
-                return this.dashboardService.getSecondaryOrder({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => { console.error('Error fetching Secondary Order:', err); return of(null); }),
-                    finalize(() => this.setLoading('secondaryOrder', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.currentStock$ = this.selectedDistributorCode$.pipe(
-            switchMap(code => {
-                if (!code) return of(null);
-                this.setLoading('currentStock', true);
-                return this.dashboardService.getCurrentStock(code).pipe(
-                    catchError(err => { console.error('Error fetching Current Stock:', err); return of(null); }),
-                    finalize(() => this.setLoading('currentStock', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.totalActiveCustomers$ = this.selectedDistributorCode$.pipe(
-            switchMap(code => {
-                if (!code) return of(null);
-                this.setLoading('totalActiveCustomers', true);
-                return this.dashboardService.getTotalActiveCustomers(code).pipe(
-                    catchError(err => { console.error('Error fetching Total Active Customers:', err); return of(null); }),
-                    finalize(() => this.setLoading('totalActiveCustomers', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.totalInvoicedCustomers$ = this.selectedDistributorCode$.pipe(
-            switchMap(code => {
-                if (!code) return of(null);
-                this.setLoading('totalInvoicedCustomers', true);
-                return this.dashboardService.getTotalInvoicedCustomers(code).pipe(
-                    catchError(err => { console.error('Error fetching Total Invoiced Customers:', err); return of(null); }),
-                    finalize(() => this.setLoading('totalInvoicedCustomers', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.historicalData$ = this.selectedDistributorCode$.pipe(
-            switchMap(code => {
-                if (!code) return of(null);
-                this.setLoading('historicalData', true);
-                return this.dashboardService.getHistoricalPerformance(code).pipe(
-                    catchError(err => { console.error('Error fetching Historical Performance:', err); return of(null); }),
-                    finalize(() => this.setLoading('historicalData', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.srPerformance$ = this.selectedDistributorCode$.pipe(
-            switchMap(code => {
-                if (!code) return of(null);
-                this.setLoading('srPerformance', true);
-                return this.dashboardService.getSrPerformance(code).pipe(
-                    catchError(err => { console.error('Error fetching SR Performance:', err); return of(null); }),
-                    finalize(() => this.setLoading('srPerformance', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-
-        this.distributorReport$ = filters$.pipe(
-            switchMap(([code, range]) => {
-                if (!code || !range) return of(null);
                 this.setLoading('distributorReport', true);
-                return this.dashboardService.getDistributorReport({ distributorCode: code, startDate: range.start, endDate: range.end }).pipe(
-                    catchError(err => { console.error('Error fetching Distributor Report:', err); return of(null); }),
-                    finalize(() => this.setLoading('distributorReport', false))
-                );
-            }), takeUntil(this.destroy$)
-        );
-    }
-    
-    private setLoading(key: keyof typeof this.isLoading, value: boolean): void {
-        this.zone.run(() => {
-            this.isLoading[key] = value;
-            this.cdr.markForCheck(); // Explicitly tell Angular to check for changes
+                const params = { distributorCode: code, startDate: range.start, endDate: range.end };
+
+                return forkJoin({
+                    report: this.dashboardService.getDistributorReport(params).pipe(catchError(() => of(null))),
+                    liftingTarget: this.dashboardService.getLiftingTarget(params).pipe(catchError(() => of(null))),
+                    purchaseAmount: this.dashboardService.getPurchaseAmount(params).pipe(catchError(() => of(null))),
+                    imsTarget: this.dashboardService.getImsTarget(params).pipe(catchError(() => of(null))),
+                    monthlyCollection: this.dashboardService.getMonthlyCollection(params).pipe(catchError(() => of(null))),
+                    primaryOrder: this.dashboardService.getPrimaryOrder(params).pipe(catchError(() => of(null))),
+                    secondaryOrder: this.dashboardService.getSecondaryOrder(params).pipe(catchError(() => of(null))),
+                });
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (result) {
+                this.distributorReport$.next(result.report);
+                const { report, ...dateKpis } = result;
+                const currentKpis = this.kpiData$.getValue();
+                this.kpiData$.next({ ...currentKpis, ...dateKpis });
+            }
+            this.setLoading('distributorReport', false);
+            this.setLoading('kpis', false);
         });
     }
 
+    private setLoading(key: keyof typeof this.isLoading, value: boolean): void {
+        this.zone.run(() => {
+            this.isLoading[key] = value;
+            this.cdr.markForCheck();
+        });
+    }
+
+    // --- EVENT HANDLERS ---
     onDistributorChange(distributor: Distributor | null): void {
-        const code = distributor ? distributor.code : null;
-        this.selectedDistributorCode$.next(code);
+        // FIX: The line that reset the date range has been removed.
+        this.selectedDistributorCode$.next(distributor?.code ?? null);
     }
 
     onDateRangeChange(start: string, end: string): void {
         if (start && end) {
             this.selectedDateRange$.next({ start, end });
+        } else {
+            this.selectedDateRange$.next(null);
         }
     }
 
-    customSearchFn(term: string, item: Distributor) {
+    customSearchFn(term: string, item: Distributor): boolean {
         term = term.toLowerCase();
         const name = item.name.toLowerCase();
         const code = item.code.toLowerCase();
         return name.includes(term) || code.includes(term);
     }
-
+    
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
     }
 }
+
